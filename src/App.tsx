@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 import { syncLayer, type SyncPayload } from './services/syncLayer';
+import { gcpEngine } from './services/gcpEngine';
 import { INITIAL_DECISIONS, INITIAL_FEED, INITIAL_SENTINEL } from './services/twinState';
 import type { DecisionItem } from './types';
 
@@ -71,6 +72,7 @@ export default function App() {
     setDecisions((prev) => [newDec, ...prev]);
     setNewText('');
     syncLayer.broadcast('DECISION_ADD', newDec);
+    gcpEngine.track('DECISION_SYNC', { decisionId: newDec.id, category: newDec.category });
   };
 
   const handleGenerateGhostwriter = () => {
@@ -109,6 +111,7 @@ export default function App() {
   const handleSendOutreach = (targetName: string) => {
     setOutreachSent((prev) => ({ ...prev, [targetName]: true }));
     syncLayer.broadcast('SENTINEL_DISPATCH', { target: targetName, status: 'SENT' });
+    gcpEngine.track('SENTINEL_TRIGGER', { target: targetName });
   };
 
   return (
@@ -141,6 +144,11 @@ export default function App() {
               {platform === 'pwa-standalone' && <Smartphone className="w-3.5 h-3.5 text-amber-400" />}
               {platform === 'web' && <Globe className="w-3.5 h-3.5 text-purple-400" />}
               <span className="capitalize font-mono font-medium">{platform}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/40 border border-blue-700/50 text-blue-300 font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+              <span>GCP: {gcpEngine.projectId}</span>
             </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-700/50 text-emerald-300 font-mono">
